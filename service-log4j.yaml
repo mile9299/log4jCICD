@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  namespace: log4j
+  namespace: log4j-prod
   name: log4j-service
   annotations:
     # Note that the backend talks over HTTP.
