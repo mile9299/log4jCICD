@@ -45,7 +45,7 @@ stages {
              steps {              
 
               sh ("""
-
+                  kubectl delete -f deployment-log4j.yaml
                   kubectl apply -f deployment-log4j.yaml
                 """)
                 
