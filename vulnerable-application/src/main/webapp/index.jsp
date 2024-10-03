@@ -8,7 +8,7 @@
 </head>
 <body>
 <div class="h-screen flex">
-    <div class="flex w-1/2 bg-gradient-to-tr from-blue-800 to-purple-700 i justify-around items-center">
+    <div class="flex w-1/2 bg-gradient-to-tr from-red-500 to-red-700 i justify-around items-center">
         <div>
             <h1 class="text-white font-bold text-4xl font-sans">ACME portal v1</h1>
             <p class="text-white mt-1">The most Secure portal</p>
@@ -31,7 +31,7 @@
                 </svg>
                 <input class="pl-2 outline-none border-none" type="text" name="password" placeholder="Password" />
             </div>
-            <button type="submit" class="block w-full bg-indigo-600 mt-4 py-2 rounded-2xl text-white font-semibold mb-2">Login</button>
+            <button type="submit" class="block w-full red-600 mt-4 py-2 rounded-2xl text-white font-semibold mb-2">Login</button>
             <span class="text-sm ml-2 hover:text-blue-500 cursor-pointer">Forgot Password ?</span>
         </form>
     </div>
