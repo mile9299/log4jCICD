@@ -17,7 +17,7 @@ stages {
             }
             post {
                 success {
-                    archiveArtifacts artifacts: 'target/log4j-shell-poc.war'
+                    archiveArtifacts artifacts: 'target/log4shell-1.0-SNAPSHOT.war'
                 }
             }
         }
