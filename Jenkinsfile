@@ -8,6 +8,18 @@ pipeline {
         }
     
 stages {
+
+    stage('Build WAR') {
+            steps {
+                sh 'mvn package'
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: 'target/log4j-shell-poc.war'
+                }
+            }
+        }
+    
     stage('Build Docker Image') {
             when {
                 branch 'main'
