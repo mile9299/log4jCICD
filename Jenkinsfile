@@ -9,7 +9,7 @@ pipeline {
     
 stages {
 
-    stage('Build WAR') {
+    stage('Compile') {
             steps {
                 dir('vulnerable-application') {
                     sh 'mvn clean package'
@@ -18,21 +18,14 @@ stages {
         }
     
     stage('Build Docker Image') {
-            when {
-                branch 'main'
-            }
+
         steps {
-                sh "ls"
-                sh "ls vulnerable-application"
                 echo 'Building docker image'
                 sh "docker build -t ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ."
             }
         }
 
     stage('Push Docker Image to ECR') {
-        when {
-            branch 'main'
-        }
       
         steps {
 
@@ -50,9 +43,7 @@ stages {
         
         
        stage("Deploy to Production"){
-        when {
-                branch 'main'
-            }
+
              steps {              
 
               sh ("""
