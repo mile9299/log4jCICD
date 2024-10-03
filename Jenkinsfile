@@ -17,7 +17,7 @@ stages {
             }
             post {
                 success {
-                    archiveArtifacts artifacts: 'log4shellcustom-1.0-SNAPSHOT.war'
+                    archiveArtifacts artifacts: 'target/log4shellcustom-1.0-SNAPSHOT.war'
                 }
             }
         }
