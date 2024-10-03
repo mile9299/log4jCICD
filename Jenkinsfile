@@ -16,6 +16,7 @@ stages {
                 }
             }
         }
+
     
     stage('Build Docker Image') {
 
@@ -24,6 +25,15 @@ stages {
                 sh "docker build -t ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ."
             }
         }
+
+    stage('Image Assessment Crowdstrike') {
+
+            steps {
+                withCredentials([usernameColonPassword(credentialsId: 'crwd-talon-1-api-key', variable: '')]) {
+                    crowdStrikeSecurity imageName: "${DOCKER_IMAGE_NAME}", imageTag: "${env.BUILD_NUMBER}", enforce: true, timeout: 60
+                }
+            }
+    }
 
     stage('Push Docker Image to ECR') {
       
