@@ -11,7 +11,9 @@ stages {
 
     stage('Build WAR') {
             steps {
-                sh 'mvn package'
+                dir('vulnerable-application') {
+                    sh 'mvn package'
+                }
             }
             post {
                 success {
@@ -25,6 +27,8 @@ stages {
                 branch 'main'
             }
         steps {
+                sh "ls"
+                sh "ls vulnerable-application"
                 echo 'Building docker image'
                 sh "docker build -t ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ."
             }
