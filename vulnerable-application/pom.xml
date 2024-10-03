@@ -7,7 +7,7 @@
     <groupId>com.example</groupId>
     <artifactId>log4shellcustom</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <name>log4shell</name>
+    <name>log4shellcustom</name>
     <packaging>war</packaging>
 
     <properties>

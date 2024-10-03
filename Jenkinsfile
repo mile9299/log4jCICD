@@ -15,11 +15,6 @@ stages {
                     sh 'mvn package'
                 }
             }
-            post {
-                success {
-                    archiveArtifacts artifacts: 'target/*'
-                }
-            }
         }
     
     stage('Build Docker Image') {
