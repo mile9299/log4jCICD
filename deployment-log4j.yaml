@@ -16,6 +16,6 @@ spec:
       containers:
       - name: log4j
         image: 517716713836.dkr.ecr.eu-central-1.amazonaws.com/cicd-log4j:latest 
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
