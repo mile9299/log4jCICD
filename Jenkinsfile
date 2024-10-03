@@ -12,7 +12,7 @@ stages {
     stage('Build WAR') {
             steps {
                 dir('vulnerable-application') {
-                    sh 'mvn package'
+                    sh 'mvn clean package'
                 }
             }
         }
@@ -57,7 +57,7 @@ stages {
 
               sh ("""
                   kubectl delete -f deployment-log4j.yaml
-                  kubectl apply -f deployment-log4j.yaml
+                  kubectl create -f deployment-log4j.yaml
                 """)
                 
              }
