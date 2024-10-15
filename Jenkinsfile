@@ -12,7 +12,7 @@ pipeline {
 
         }
 
-
+stages {
 
     stage('FCS IaC Scan Execution') {
         steps {
@@ -86,4 +86,6 @@ pipeline {
              }
          }
     
+    }
+
 }
