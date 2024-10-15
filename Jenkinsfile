@@ -17,6 +17,7 @@ stages {
 
 
  stage('FCS IaC Scan Execution') {
+
     steps {
 
             withCredentials([usernamePassword(credentialsId: 'CS_REGISTRY', passwordVariable: 'CS_PASSWORD', usernameVariable: 'CS_USERNAME')]) {
@@ -80,7 +81,7 @@ docker run --network=host --rm "$CS_IMAGE_NAME":"$CS_IMAGE_TAG" --client-id "$CS
             }
     
     }
-
+ }
 
 
 
