@@ -21,7 +21,7 @@ stages {
     steps {
 
             withCredentials([usernamePassword(credentialsId: 'CS_REGISTRY', passwordVariable: 'CS_PASSWORD', usernameVariable: 'CS_USERNAME')]) {
-            withCredentials([usernamePassword(credentialsId: 'CS-API-TOKEN', passwordVariable: 'CS_CLIENT_ID', usernameVariable: 'CS_CLIENT_SECRET')]) {
+            withCredentials([usernamePassword(credentialsId: 'CS-API-TOKEN', passwordVariable: 'CS_CLIENT_SECRET', usernameVariable: 'CS_CLIENT_ID')]) {
     
         script {
             def SCAN_EXIT_CODE = sh(
