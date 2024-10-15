@@ -7,7 +7,7 @@ pipeline {
         CS_IMAGE_NAME="registry.crowdstrike.com/fcs/us-1/release/cs-fcs"
         CS_IMAGE_TAG="0.42.0"
         FALCON_REGION="us-1"
-        PROJECT_PATH="git::https://github.com/futurice/terraform-examples.git//aws/aws_lambda_api/"
+        PROJECT_PATH="git::https://github.com/grocamador/cicd-log4j.git//kubernetes
      // DOCKERHUB_CREDENTIALS= credentials('dockerhubcredentials')
 
         }
