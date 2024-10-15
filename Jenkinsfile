@@ -28,9 +28,6 @@ pipeline {
             echo "Client secret: ${CS_CLIENT_SECRET}"   
             }
 
-
-        
-           
         }
     }
 
