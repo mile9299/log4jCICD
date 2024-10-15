@@ -11,22 +11,21 @@ pipeline {
      // DOCKERHUB_CREDENTIALS= credentials('dockerhubcredentials')
 
         }
-    
-stages {
 
-     stage('FCS IaC Scan Execution') {
+
+
+    stage('FCS IaC Scan Execution') {
     steps {
+        
+    withCredentials([usernamePassword(credentialsId: 'CS_REGISTRY', passwordVariable: 'CS_PASSWORD', usernameVariable: 'CS_USERNAME')]) {
+    // Use the credentials here
+    echo "Registry username: ${CS_USERNAME}"
+     echo "Registry password: ${CS_PASSWORD}"
 
-         withCredentials([usernamePassword(credentialsId: 'CS_REGISTRY', passwordVariable: 'CS_PASSWORD', usernameVariable: 'CS_USERNAME')]) {
+     withCredentials([usernamePassword(credentialsId: 'CS-API-TOKEN', passwordVariable: 'CS_CLIENT_ID', usernameVariable: 'CS_CLIENT_SECRET')]) {
                     // Use the credentials here
-                    echo "Registry username: ${CS_USERNAME}"
-                    echo "Registry password: ${CS_PASSWORD}"
-
-             withCredentials([usernamePassword(credentialsId: 'CS-API-TOKEN', passwordVariable: 'CS_CLIENT_ID', usernameVariable: 'CS_CLIENT_SECRET')]) {
-                    // Use the credentials here
-                    echo "client ID: ${CS_CLIENT_ID}"
-                    echo "Client secret: ${CS_CLIENT_SECRET}"            
-
+    echo "client ID: ${CS_CLIENT_ID}"
+    echo "Client secret: ${CS_CLIENT_SECRET}"   
         script {
             def SCAN_EXIT_CODE = sh(
                 script: '''
