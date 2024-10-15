@@ -3,8 +3,8 @@ pipeline {
     environment {
         DOCKER_REGISTRY_NAME = "517716713836.dkr.ecr.eu-central-1.amazonaws.com"
         DOCKER_IMAGE_NAME = "cicd-log4j"
-        CS_REGISTRY= registry.crowdstrike.com
-        CS_IMAGE_NAME=registry.crowdstrike.com/fcs/us-1/release/cs-fcs
+        CS_REGISTRY= "registry.crowdstrike.com"
+        CS_IMAGE_NAME="registry.crowdstrike.com/fcs/us-1/release/cs-fcs"
         CS_IMAGE_TAG="0.42.0"
         FALCON_REGION="us-1"
         PROJECT_PATH="./kubernetes"
@@ -15,19 +15,23 @@ pipeline {
 
 
     stage('FCS IaC Scan Execution') {
-    steps {
+        steps {
 
-        withCredentials([usernamePassword(credentialsId: 'CS_REGISTRY', passwordVariable: 'CS_PASSWORD', usernameVariable: 'CS_USERNAME')]) {
-        // Use the credentials here
-        echo "Registry username: ${CS_USERNAME}"
-        echo "Registry password: ${CS_PASSWORD}"
+            withCredentials([usernamePassword(credentialsId: 'CS_REGISTRY', passwordVariable: 'CS_PASSWORD', usernameVariable: 'CS_USERNAME')]) {
+            // Use the credentials here
+            echo "Registry username: ${CS_USERNAME}"
+            echo "Registry password: ${CS_PASSWORD}"
+            }
+            withCredentials([usernamePassword(credentialsId: 'CS-API-TOKEN', passwordVariable: 'CS_CLIENT_ID', usernameVariable: 'CS_CLIENT_SECRET')]) {
+                            // Use the credentials here
+            echo "client ID: ${CS_CLIENT_ID}"
+            echo "Client secret: ${CS_CLIENT_SECRET}"   
+            }
+
+
+        
+           
         }
-        withCredentials([usernamePassword(credentialsId: 'CS-API-TOKEN', passwordVariable: 'CS_CLIENT_ID', usernameVariable: 'CS_CLIENT_SECRET')]) {
-                        // Use the credentials here
-        echo "client ID: ${CS_CLIENT_ID}"
-        echo "Client secret: ${CS_CLIENT_SECRET}"   
-        }
-    
     }
 
 
