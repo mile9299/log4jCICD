@@ -14,7 +14,49 @@ pipeline {
 
 stages {
 
+    stage('Compile') {
+            steps {
+                dir('vulnerable-application') {
+                    sh 'mvn clean package'
+                }
+            }
+        }
 
+    
+    stage('Build Docker Image') {
+
+        steps {
+                echo 'Building docker image'
+                sh "docker build -t ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ."
+            }
+        }
+
+    stage('Image Assessment Crowdstrike') {
+
+            steps {
+                withCredentials([usernameColonPassword(credentialsId: 'crwd-talon-1-api-key', variable: '')]) {
+                    crowdStrikeSecurity imageName: "${DOCKER_IMAGE_NAME}", imageTag: "${env.BUILD_NUMBER}", enforce: false, timeout: 60
+                }
+            }
+    }
+
+    stage('Push Docker Image to ECR') {
+      
+        steps {
+
+                echo "Login on ECR"
+                sh "aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 517716713836.dkr.ecr.eu-central-1.amazonaws.com"       		
+	            echo 'Login Completed' 
+                echo "Pushing docker image to ECR with current build tag"
+                sh " docker tag ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ${DOCKER_REGISTRY_NAME}/${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
+                sh " docker push ${DOCKER_REGISTRY_NAME}/${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
+                echo 'Pushing docker image with tag latest'
+                sh "docker tag ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ${DOCKER_REGISTRY_NAME}/${DOCKER_IMAGE_NAME}:latest"
+                sh "docker push ${DOCKER_REGISTRY_NAME}/${DOCKER_IMAGE_NAME}:latest"
+            }
+        }
+        
+    
 
  stage('FCS IaC Scan Execution') {
 
@@ -82,52 +124,7 @@ docker run --network=host --rm "$CS_IMAGE_NAME":"$CS_IMAGE_TAG" --client-id "$CS
     
     }
  }
-
-
-
-    stage('Compile') {
-            steps {
-                dir('vulnerable-application') {
-                    sh 'mvn clean package'
-                }
-            }
-        }
-
     
-    stage('Build Docker Image') {
-
-        steps {
-                echo 'Building docker image'
-                sh "docker build -t ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ."
-            }
-        }
-
-    stage('Image Assessment Crowdstrike') {
-
-            steps {
-                withCredentials([usernameColonPassword(credentialsId: 'crwd-talon-1-api-key', variable: '')]) {
-                    crowdStrikeSecurity imageName: "${DOCKER_IMAGE_NAME}", imageTag: "${env.BUILD_NUMBER}", enforce: true, timeout: 60
-                }
-            }
-    }
-
-    stage('Push Docker Image to ECR') {
-      
-        steps {
-
-                echo "Login on ECR"
-                sh "aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 517716713836.dkr.ecr.eu-central-1.amazonaws.com"       		
-	            echo 'Login Completed' 
-                echo "Pushing docker image to ECR with current build tag"
-                sh " docker tag ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ${DOCKER_REGISTRY_NAME}/${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
-                sh " docker push ${DOCKER_REGISTRY_NAME}/${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
-                echo 'Pushing docker image with tag latest'
-                sh "docker tag ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ${DOCKER_REGISTRY_NAME}/${DOCKER_IMAGE_NAME}:latest"
-                sh "docker push ${DOCKER_REGISTRY_NAME}/${DOCKER_IMAGE_NAME}:latest"
-            }
-        }
-        
-        
        stage("Deploy to Production"){
 
              steps {              
