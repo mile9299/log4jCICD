@@ -7,7 +7,7 @@ pipeline {
         CS_IMAGE_NAME=registry.crowdstrike.com/fcs/us-1/release/cs-fcs
         CS_IMAGE_TAG="0.42.0"
         FALCON_REGION="us-1"
-        PROJECT_PATH=./kubernetes
+        PROJECT_PATH="./kubernetes"
      // DOCKERHUB_CREDENTIALS= credentials('dockerhubcredentials')
 
         }
