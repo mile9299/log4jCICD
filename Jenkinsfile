@@ -15,21 +15,13 @@ pipeline {
 stages {
 
 
+
  stage('FCS IaC Scan Execution') {
     steps {
 
             withCredentials([usernamePassword(credentialsId: 'CS_REGISTRY', passwordVariable: 'CS_PASSWORD', usernameVariable: 'CS_USERNAME')]) {
-            // Use the credentials here
-            echo "Registry username: ${CS_USERNAME}"
-            echo "Registry password: ${CS_PASSWORD}"
-            }
             withCredentials([usernamePassword(credentialsId: 'CS-API-TOKEN', passwordVariable: 'CS_CLIENT_ID', usernameVariable: 'CS_CLIENT_SECRET')]) {
-                            // Use the credentials here
-            echo "client ID: ${CS_CLIENT_ID}"
-            echo "Client secret: ${CS_CLIENT_SECRET}"   
-            }
-
-
+    
         script {
             def SCAN_EXIT_CODE = sh(
                 script: '''
@@ -84,22 +76,12 @@ docker run --network=host --rm "$CS_IMAGE_NAME":"$CS_IMAGE_TAG" --client-id "$CS
                 }
                 
         }
+            }
+            }
+    
     }
-    post {
-        success {
-            echo 'Build succeeded!'
-        }
-        unstable {
-            echo 'Build is unstable, but still considered successful!'
-        }
-        failure {
-            echo 'Build failed!'
-        }
-        always {
-            echo "FCS IaC Scan Execution complete.."
-        }
-    }
-}
+
+
 
 
     stage('Compile') {
