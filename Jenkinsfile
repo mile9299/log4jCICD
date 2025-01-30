@@ -124,11 +124,23 @@ docker run --network=host --rm "$CS_IMAGE_NAME":"$CS_IMAGE_TAG" --client-id "$CS
     
     }
  }
-    
-       stage("Deploy to Production"){
+
+       stage("Deploy to Pre"){
 
              steps {              
 
+              sh ("""
+                  kubectl rollout restart -f kubernetes/preprod-deployment-log4j.yaml
+                """)
+                
+             }
+         }
+
+
+       stage("Deploy to Production"){
+
+             steps {              
+              input 'Do you approve deployment to production?'
               sh ("""
                   kubectl rollout restart -f kubernetes/deployment-log4j.yaml
                 """)
