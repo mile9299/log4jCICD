@@ -140,7 +140,10 @@ docker run --network=host --rm "$CS_IMAGE_NAME":"$CS_IMAGE_TAG" --client-id "$CS
        stage("Deploy to Production"){
 
              steps {              
-              input 'Do you approve deployment to production?'
+                    // Create an Approval Button with a timeout of 15minutes.
+	                timeout(time: 15, unit: "MINUTES") {
+	                    input message: 'Do you want to approve the deployment?', ok: 'Yes'
+	                }
               sh ("""
                   kubectl rollout restart -f kubernetes/deployment-log4j.yaml
                 """)
