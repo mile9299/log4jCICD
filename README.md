@@ -7,8 +7,14 @@ For PoC/demo purpose only
 
 Based on https://github.com/kozmer/log4j-shell-poc
 
+
 #### Usage:
 
+Deploy the application:
+
+![image](https://github.com/user-attachments/assets/4d8d385d-f79b-4fa8-b9b8-857eac7af333)
+
+From the attacker machine:
 
 * Start a netcat listener to accept reverse shell connection.<br>
 ```py
