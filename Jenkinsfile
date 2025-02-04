@@ -8,6 +8,11 @@ pipeline {
         CS_IMAGE_TAG="0.42.0"
         FALCON_REGION="us-1"
         PROJECT_PATH="git::https://github.com/grocamador/cicd-log4j.git//kubernetes"
+        CS_CLIENT_ID = credentials('CS_CLIENT_ID')
+        CS_CLIENT_SECRET = credentials('CS_CLIENT_SECRET')
+        CS_USERNAME = 'mile'
+        CS_PASSWORD = credentials('CS_PASSWORD')
+        FALCON_REGION = 'us-1'
      // DOCKERHUB_CREDENTIALS= credentials('dockerhubcredentials')
 
         }
@@ -34,7 +39,7 @@ stages {
     stage('Image Assessment Crowdstrike') {
 
             steps {
-                withCredentials([usernameColonPassword(credentialsId: 'crwd-talon-1-api-key', variable: '')]) {
+                withCredentials([usernameColonPassword(credentialsId: 'CRWD', variable: '')]) {
                     crowdStrikeSecurity imageName: "${DOCKER_IMAGE_NAME}", imageTag: "${env.BUILD_NUMBER}", enforce: true, timeout: 60
                 }
             }
@@ -56,14 +61,20 @@ stages {
             }
         }
         
-    
+stage('Test with Snyk') {
+	steps {
+                script {
+                    snykSecurity failOnIssues: false, severity: 'critical', snykInstallation: 'snyk-manual', snykTokenId: 'SNYK'
+                }
+            }
+        }   
 
  stage('FCS IaC Scan Execution') {
 
     steps {
 
             withCredentials([usernamePassword(credentialsId: 'CS_REGISTRY', passwordVariable: 'CS_PASSWORD', usernameVariable: 'CS_USERNAME')]) {
-            withCredentials([usernamePassword(credentialsId: 'CS-API-TOKEN', passwordVariable: 'CS_CLIENT_SECRET', usernameVariable: 'CS_CLIENT_ID')]) {
+            withCredentials([usernamePassword(credentialsId: 'CS_CLIENT_ID', passwordVariable: 'CS_CLIENT_SECRET', usernameVariable: 'CS_CLIENT_ID')]) {
     
         script {
             def SCAN_EXIT_CODE = sh(
