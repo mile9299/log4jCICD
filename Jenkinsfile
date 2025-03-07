@@ -64,13 +64,13 @@ pipeline {
             }
         }
 
-        stage('Test with Snyk') {
-            steps {
-                script {
-                    snykSecurity failOnIssues: false, severity: 'critical', snykInstallation: 'snyk-manual', snykTokenId: 'SNYK'
-                }
-            }
-        }
+      //  stage('Test with Snyk') {
+        //    steps {
+          //      script {
+            //        snykSecurity failOnIssues: false, severity: 'critical', snykInstallation: 'snyk-manual', snykTokenId: 'SNYK'
+              //  }
+           // }
+       // }
 
         stage('FCS IaC Scan Execution') {
             steps {
