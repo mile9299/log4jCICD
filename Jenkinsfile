@@ -30,6 +30,13 @@ pipeline {
             }
         }
 
+        stage('Verify AWS CLI & Docker') {
+            steps {
+                sh 'aws --version'
+                sh 'docker --version'
+            }
+        }
+
         stage('Image Assessment Crowdstrike') {
             steps {
                 withCredentials([usernameColonPassword(credentialsId: 'CRWD', variable: 'CROWDSTRIKE_CREDENTIALS')]) {
@@ -41,7 +48,12 @@ pipeline {
         stage('Push Docker Image to ECR') {
             steps {
                 echo "Login to ECR"
-                sh "aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${DOCKER_REGISTRY_NAME}"
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'AWS_CREDENTIALS'
+                ]]) {
+                    sh "aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${DOCKER_REGISTRY_NAME}"
+                }
                 echo 'Login Completed'
                 echo "Pushing docker image to ECR with current build tag"
                 sh "docker tag ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ${DOCKER_REGISTRY_NAME}/${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
