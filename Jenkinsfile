@@ -75,7 +75,7 @@ pipeline {
         stage('FCS IaC Scan Execution') {
             steps {
                 withCredentials([
-                    usernamePassword(credentialsId: 'CS_REGISTRY', passwordVariable: 'CS_PASSWORD', usernameVariable: 'CS_USERNAME'),
+                  //  usernamePassword(credentialsId: 'CS_REGISTRY', passwordVariable: 'CS_PASSWORD', usernameVariable: 'CS_USERNAME'),
                     usernamePassword(credentialsId: 'CS_CLIENT_ID', passwordVariable: 'CS_CLIENT_SECRET', usernameVariable: 'CS_CLIENT_ID')
                 ]) {
                     script {
