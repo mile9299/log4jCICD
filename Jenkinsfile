@@ -64,21 +64,9 @@ pipeline {
             }
         }
 
-      //  stage('Test with Snyk') {
-        //    steps {
-          //      script {
-            //        snykSecurity failOnIssues: false, severity: 'critical', snykInstallation: 'snyk-manual', snykTokenId: 'SNYK'
-              //  }
-           // }
-       // }
-
         stage('FCS IaC Scan Execution') {
             steps {
-                 withCredentials([usernameColonPassword(credentialsId: 'CRWD', variable: 'CROWDSTRIKE_CREDENTIALS')]) {
-               // withCredentials([
-                  //  usernamePassword(credentialsId: 'CS_REGISTRY', passwordVariable: 'CS_PASSWORD', usernameVariable: 'CS_USERNAME'),
-                 //   usernamePassword(credentialsId: 'CS_CLIENT_ID', passwordVariable: 'CS_CLIENT_SECRET', usernameVariable: 'CS_CLIENT_ID')
-                //]) {
+                withCredentials([usernameColonPassword(credentialsId: 'CRWD', variable: 'CROWDSTRIKE_CREDENTIALS')]) {
                     script {
                         def SCAN_EXIT_CODE = sh(
                             script: '''
@@ -93,27 +81,32 @@ pipeline {
                                 echo "$CS_PASSWORD" | docker login "$CS_REGISTRY" --username "$CS_USERNAME" --password-stdin
 
                                 echo "Pulling FCS container target from Crowdstrike"
-                                 docker pull mile/cs-fcs:0.42.0
-                            if [ $? -eq 0 ]; then
-                                echo "fcs docker container image pulled successfully"
-                                echo "=============== FCS IaC Scan Starts ==============="
-
-docker run --network=host --rm "$CS_IMAGE_NAME":"$CS_IMAGE_TAG" --client-id "$CS_CLIENT_ID" --client-secret "$CS_CLIENT_SECRET" --falcon-region "$FALCON_REGION" iac scan -p "$PROJECT_PATH" --fail-on "high=10,medium=70,low=50,info=10"
-                                scan_status=$?
-                                echo "=============== FCS IaC Scan Ends ==============="
+                                docker pull mile/cs-fcs:0.42.0
+                                if [ $? -eq 0 ]; then
+                                    echo "FCS docker container image pulled successfully"
+                                    echo "=============== FCS IaC Scan Starts ==============="
+                                    docker run --network=host --rm "$CS_IMAGE_NAME":"$CS_IMAGE_TAG" --client-id "$CS_CLIENT_ID" --client-secret "$CS_CLIENT_SECRET" --falcon-region "$FALCON_REGION" iac scan -p "$PROJECT_PATH" --fail-on "high=10,medium=70,low=50,info=10"
+                                    scan_status=$?
+                                    echo "=============== FCS IaC Scan Ends ==============="
+                                else
+                                    echo "Error: failed to pull FCS docker image from Crowdstrike"
+                                    scan_status=1
+                                fi
                                 exit $scan_status
                             ''', returnStatus: true
                         )
-
-                        echo "FCS IaC Scan status: ${SCAN_EXIT_CODE}"
+                        
+                        echo "FCS IaC Scan Status: ${SCAN_EXIT_CODE}"
                         if (SCAN_EXIT_CODE == 40) {
-                            echo "Scan succeeded, but vulnerabilities exceeded threshold. Marking stage as UNSTABLE."
+                            echo "Scan succeeded & vulnerabilities count are ABOVE the '--fail-on' threshold; marking as Unstable"
                             currentBuild.result = 'UNSTABLE'
                         } else if (SCAN_EXIT_CODE == 0) {
-                            echo "Scan succeeded, vulnerabilities within threshold."
+                            echo "Scan succeeded & vulnerabilities count are BELOW the '--fail-on' threshold; marking as Success"
                             currentBuild.result = 'SUCCESS'
                         } else {
-                            error("Unexpected scan exit code: ${SCAN_EXIT_CODE}")
+                            echo "Unexpected scan exit code: ${SCAN_EXIT_CODE}"
+                            currentBuild.result = 'FAILURE'
+                            error "FCS IaC Scan failed with exit code ${SCAN_EXIT_CODE}"
                         }
                     }
                 }
