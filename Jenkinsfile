@@ -10,7 +10,7 @@ pipeline {
         PROJECT_PATH = "git::https://github.com/grocamador/cicd-log4j.git//kubernetes"
         CS_CLIENT_ID = credentials('CS_CLIENT_ID')
         CS_CLIENT_SECRET = credentials('CS_CLIENT_SECRET')
-        CS_USERNAME = 'mile'
+        CS_USERNAME = credentials('CS_USERNAME')
         CS_PASSWORD = credentials('CS_PASSWORD')
     }
 
