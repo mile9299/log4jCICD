@@ -93,12 +93,13 @@ pipeline {
                                 echo "$CS_PASSWORD" | docker login "$CS_REGISTRY" --username "$CS_USERNAME" --password-stdin
 
                                 echo "Pulling FCS container target from Crowdstrike"
-                                docker pull "$CS_IMAGE_NAME:$CS_IMAGE_TAG"
-
+                                 docker pull mile/cs-fcs:0.42.0
+                            if [ $? -eq 0 ]; then
+                                echo "fcs docker container image pulled successfully"
                                 echo "=============== FCS IaC Scan Starts ==============="
-                                docker run --network=host --rm "$CS_IMAGE_NAME:$CS_IMAGE_TAG" --client-id "$CS_CLIENT_ID" --client-secret "$CS_CLIENT_SECRET" --falcon-region "$FALCON_REGION" iac scan -p "$PROJECT_PATH" --upload-results --fail-on "high=10,medium=70,low=50,info=10"
-                                scan_status=$?
 
+docker run --network=host --rm "$CS_IMAGE_NAME":"$CS_IMAGE_TAG" --client-id "$CS_CLIENT_ID" --client-secret "$CS_CLIENT_SECRET" --falcon-region "$FALCON_REGION" iac scan -p "$PROJECT_PATH" --fail-on "high=10,medium=70,low=50,info=10"
+                                scan_status=$?
                                 echo "=============== FCS IaC Scan Ends ==============="
                                 exit $scan_status
                             ''', returnStatus: true
