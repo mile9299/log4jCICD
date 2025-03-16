@@ -115,8 +115,13 @@ pipeline {
 
         stage('Deploy to Pre') {
             steps {
-                withCredentials([file(credentialsId: 'KUBE_CONFIG', variable: 'KUBECONFIG')]) {
-                    sh "aws configure"
+                withCredentials([[
+                $class: 'AmazonWebServicesCredentialsBinding',
+                credentialsId: 'AWS_CREDENTIALS'
+                ]]) {
+                    sh "aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}"
+                    sh "aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}
+                    sh "aws configure set region us-east-2"
                     sh "aws eks update-kubeconfig --name TedsEKS --region us-east-2"
                     sh "kubectl config current-context"
                     sh "kubectl get nodes"
