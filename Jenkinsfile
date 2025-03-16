@@ -116,6 +116,7 @@ pipeline {
         stage('Deploy to Pre') {
             steps {
                 withCredentials([file(credentialsId: 'KUBE_CONFIG', variable: 'KUBECONFIG')]) {
+                    sh "aws configure"
                     sh "aws eks update-kubeconfig --name TedsEKS --region us-east-2"
                     sh "kubectl config current-context"
                     sh "kubectl get nodes"
