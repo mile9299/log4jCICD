@@ -12,8 +12,6 @@ pipeline {
         CS_CLIENT_SECRET = credentials('CS_CLIENT_SECRET')
         CS_USERNAME = credentials('CS_USERNAME')
         CS_PASSWORD = credentials('CS_PASSWORD')
-        AWS_CLUSTER_NAME = "your-eks-cluster-name"
-        AWS_REGION = "your-aws-region"
     }
 
     stages {
@@ -39,19 +37,85 @@ pipeline {
             }
         }
 
-        stage('Authenticate with AWS EKS') {
+        stage('Image Assessment Crowdstrike') {
             steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS_CREDENTIALS']]) {
-                    sh "aws eks update-kubeconfig --name ${AWS_CLUSTER_NAME} --region ${AWS_REGION}"
+                withCredentials([usernameColonPassword(credentialsId: 'CRWD', variable: 'CROWDSTRIKE_CREDENTIALS')]) {
+                    crowdStrikeSecurity imageName: "${DOCKER_IMAGE_NAME}", imageTag: "${env.BUILD_NUMBER}", enforce: false, timeout: 60
+                }
+            }
+        }
+
+        stage('Push Docker Image to ECR') {
+            steps {
+                echo "Login to ECR"
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'AWS_CREDENTIALS'
+                ]]) {
+                    sh "aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${DOCKER_REGISTRY_NAME}"
+                }
+                echo 'Login Completed'
+                echo "Pushing docker image to ECR with current build tag"
+                sh "docker tag ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ${DOCKER_REGISTRY_NAME}/${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
+                sh "docker push ${DOCKER_REGISTRY_NAME}/${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
+                echo 'Pushing docker image with tag latest'
+                sh "docker tag ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ${DOCKER_REGISTRY_NAME}/${DOCKER_IMAGE_NAME}:latest"
+                sh "docker push ${DOCKER_REGISTRY_NAME}/${DOCKER_IMAGE_NAME}:latest"
+            }
+        }
+
+        stage('FCS IaC Scan Execution') {
+            steps {
+                withCredentials([usernameColonPassword(credentialsId: 'CRWD', variable: 'CROWDSTRIKE_CREDENTIALS')]) {
+                    script {
+                        def SCAN_EXIT_CODE = sh(
+                            script: '''
+                                set -e  # Exit on error
+                                scan_status=0
+                                if [[ -z "$CS_USERNAME" || -z "$CS_PASSWORD" || -z "$CS_REGISTRY" || -z "$CS_IMAGE_NAME" || -z "$CS_IMAGE_TAG" || -z "$CS_CLIENT_ID" || -z "$CS_CLIENT_SECRET" || -z "$FALCON_REGION" || -z "$PROJECT_PATH" ]]; then
+                                    echo "Error: required environment variables/params are not set"
+                                    exit 1
+                                fi
+
+                                echo "Logging in to Crowdstrike registry with username: $CS_USERNAME"
+                                echo "$CS_PASSWORD" | docker login "$CS_REGISTRY" --username "$CS_USERNAME" --password-stdin
+
+                                echo "Pulling FCS container target from Crowdstrike"
+                                docker pull mile/cs-fcs:0.42.0
+                                if [ $? -eq 0 ]; then
+                                    echo "FCS docker container image pulled successfully"
+                                    echo "=============== FCS IaC Scan Starts ==============="
+                                    docker run --network=host --rm "$CS_IMAGE_NAME":"$CS_IMAGE_TAG" --client-id "$CS_CLIENT_ID" --client-secret "$CS_CLIENT_SECRET" --falcon-region "$FALCON_REGION" iac scan -p "$PROJECT_PATH" --fail-on "high=10,medium=70,low=50,info=10"
+                                    scan_status=$?
+                                    echo "=============== FCS IaC Scan Ends ==============="
+                                else
+                                    echo "Error: failed to pull FCS docker image from Crowdstrike"
+                                    scan_status=1
+                                fi
+                                exit $scan_status
+                            ''', returnStatus: true
+                        )
+                        
+                        echo "FCS IaC Scan Status: ${SCAN_EXIT_CODE}"
+                        if (SCAN_EXIT_CODE == 40) {
+                            echo "Scan succeeded & vulnerabilities count are ABOVE the '--fail-on' threshold; marking as Unstable"
+                            currentBuild.result = 'UNSTABLE'
+                        } else if (SCAN_EXIT_CODE == 0) {
+                            echo "Scan succeeded & vulnerabilities count are BELOW the '--fail-on' threshold; marking as Success"
+                            currentBuild.result = 'SUCCESS'
+                        } else {
+                            echo "Unexpected scan exit code: ${SCAN_EXIT_CODE}"
+                            currentBuild.result = 'FAILURE'
+                            error "FCS IaC Scan failed with exit code ${SCAN_EXIT_CODE}"
+                        }
+                    }
                 }
             }
         }
 
         stage('Deploy to Pre') {
             steps {
-                withCredentials([file(credentialsId: 'KUBE_CONFIG', variable: 'KUBECONFIG')]) {
-                    sh "kubectl rollout restart -f kubernetes/preprod-deployment-log4j.yaml"
-                }
+                sh "kubectl rollout restart -f kubernetes/preprod-deployment-log4j.yaml"
             }
         }
 
@@ -60,9 +124,7 @@ pipeline {
                 timeout(time: 15, unit: "MINUTES") {
                     input message: 'Do you want to approve the deployment?', ok: 'Yes'
                 }
-                withCredentials([file(credentialsId: 'KUBE_CONFIG', variable: 'KUBECONFIG')]) {
-                    sh "kubectl rollout restart -f kubernetes/deployment-log4j.yaml"
-                }
+                sh "kubectl rollout restart -f kubernetes/deployment-log4j.yaml"
             }
         }
     }
