@@ -115,7 +115,10 @@ pipeline {
 
         stage('Deploy to Pre') {
             steps {
+                withCredentials([file(credentialsId: 'KUBE_CONFIG', variable: 'KUBECONFIG')]) {
                 sh "kubectl rollout restart -f kubernetes/preprod-deployment-log4j.yaml"
+                }
+
             }
         }
 
