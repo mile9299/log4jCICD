@@ -115,6 +115,7 @@ pipeline {
 
         stage('Deploy to Pre') {
             steps {
+                aws eks --region us-east-2 update-kubeconfig --name TedsEKS
                 sh "kubectl rollout restart -f kubernetes/preprod-deployment-log4j.yaml"
             }
         }
