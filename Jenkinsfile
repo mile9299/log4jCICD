@@ -37,6 +37,17 @@ pipeline {
             }
         }
 
+        stage('Authenticate with AWS EKS') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'AWS_CREDENTIALS'
+                ]]) {
+                    sh "aws eks update-kubeconfig --region eu-central-1 --name your-eks-cluster-name"
+                }
+            }
+        }
+
         stage('Image Assessment Crowdstrike') {
             steps {
                 withCredentials([usernameColonPassword(credentialsId: 'CRWD', variable: 'CROWDSTRIKE_CREDENTIALS')]) {
@@ -115,7 +126,6 @@ pipeline {
 
         stage('Deploy to Pre') {
             steps {
-                aws eks --region us-east-2 update-kubeconfig --name TedsEKS
                 sh "kubectl rollout restart -f kubernetes/preprod-deployment-log4j.yaml"
             }
         }
