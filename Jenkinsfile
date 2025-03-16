@@ -116,10 +116,11 @@ pipeline {
         stage('Deploy to Pre') {
             steps {
                 withCredentials([file(credentialsId: 'KUBE_CONFIG', variable: 'KUBECONFIG')]) {
-                sh "aws eks update-kubeconfig --name TedsEKS --region us-east-2"
-                sh "kubectl rollout restart -f kubernetes/preprod-deployment-log4j.yaml"
+                    sh "aws eks update-kubeconfig --name TedsEKS --region us-east-2"
+                    sh "kubectl config current-context"
+                    sh "kubectl get nodes"
+                    sh "kubectl rollout restart -f kubernetes/preprod-deployment-log4j.yaml"
                 }
-
             }
         }
 
