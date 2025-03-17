@@ -119,13 +119,13 @@ pipeline {
                 $class: 'AmazonWebServicesCredentialsBinding',
                 credentialsId: 'AWS_CREDENTIALS'
                 ]]) {
-                    sh "aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}"
-                    sh "aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}"
-                    sh "aws configure set region us-east-2"
-                    sh "aws eks update-kubeconfig --name TedsEKS --region us-east-2 | docker login --username AWS --password-stdin ${DOCKER_REGISTRY_NAME}"
+                  //  sh "aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}"
+                 //   sh "aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}"
+                 //   sh "aws configure set region us-east-2"
+                 //   sh "aws eks update-kubeconfig --name TedsEKS --region us-east-2 | docker login --username AWS --password-stdin ${DOCKER_REGISTRY_NAME}"
                     sh "kubectl config current-context"
                     sh "kubectl get nodes"
-                    sh "kubectl rollout restart -f kubernetes/preprod-deployment-log4j.yaml"
+                    sh "kubectl apply -f kubernetes/preprod-deployment-log4j.yaml"
                 }
             }
         }
