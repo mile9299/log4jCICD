@@ -12,6 +12,7 @@ pipeline {
         CS_CLIENT_SECRET = credentials('CS_CLIENT_SECRET')
         CS_USERNAME = credentials('CS_USERNAME')
         CS_PASSWORD = credentials('CS_PASSWORD')
+        AZURE_SUBSCRIPTION = credentials('AZURE_SUBSCRIPTION')
     }
 
     stages {
