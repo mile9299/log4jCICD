@@ -93,7 +93,7 @@ pipeline {
 
         stage('Deploy to Pre') {
             steps {
-                sh "az account set --subscription ${AZURE_SUBSCRIPTION}"
+                sh "az account set --subscription $AZURE_SUBSCRIPTION"
                 sh "az aks get-credentials --resource-group TedsAKS_group --name TedsAKS --overwrite-existing"
                 sh "kubectl apply -f kubernetes/preprod-deployment-log4j.yaml"
             }
