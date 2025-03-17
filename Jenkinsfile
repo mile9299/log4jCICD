@@ -125,7 +125,8 @@ pipeline {
                   //  sh "kubectl config current-context"
                    // sh "kubectl get nodes"
                     sh "kubectl apply -f kubernetes/preprod-deployment-log4j.yaml"
-                }
+                    }
+                } 
             }
         }
 
