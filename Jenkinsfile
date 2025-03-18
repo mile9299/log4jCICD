@@ -135,7 +135,7 @@ pipeline {
 
                 echo "Restarting production deployment"
                 sh 'kubectl create ns log4j-prod'
-                sh 'kubectl rollout restart -f kubernetes/deployment-log4j.yaml'
+                sh 'kubectl apply -f kubernetes/deployment-log4j.yaml'
             }
         }
     }
