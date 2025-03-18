@@ -51,10 +51,8 @@ pipeline {
         stage('Push Docker Image to ACR') {
             steps {
                 echo "Login to ACR"
-                 {
                     //sh "az account set --subscription ${AZURE_SUBSCRIPTION}"
-                    sh "docker login teds2acr.azurecr.io -u ${ACR_USER} -p ${ACR_PASSWORD}"
-                }
+                sh "docker login teds2acr.azurecr.io -u ${ACR_USER} -p ${ACR_PASSWORD}"
                 echo 'Login Completed'
                 echo "Pushing docker image to ECR with current build tag"
                 sh "docker tag ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ${DOCKER_REGISTRY_NAME}/${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
