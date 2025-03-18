@@ -33,7 +33,7 @@ pipeline {
             }
         }
 
-        stage('Verify ACR CLI & Docker') {
+        stage('Verify AZ CLI & Docker') {
             steps {
                 sh 'az --version'
                 sh 'docker --version'
@@ -48,11 +48,11 @@ pipeline {
             }
         }
 
-        stage('Push Docker Image to ECR') {
+        stage('Push Docker Image to ACR') {
             steps {
                 echo "Login to ACR"
-                withCredentials([aws(credentialsId: 'AWS_CREDENTIALS')]) {
-                    sh "az account set --subscription ${AZURE_SUBSCRIPTION}"
+                 {
+                    //sh "az account set --subscription ${AZURE_SUBSCRIPTION}"
                     sh "docker login teds2acr.azurecr.io -u ${ACR_USER} -p ${ACR_PASSWORD}"
                 }
                 echo 'Login Completed'
