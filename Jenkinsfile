@@ -55,7 +55,7 @@ pipeline {
                 sh "docker login teds2acr.azurecr.io -u ${ACR_USER} -p ${ACR_PASSWORD}"
                 echo 'Login Completed'
                 echo "Pushing docker image to ECR with current build tag"
-                sh "docker tag ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ${DOCKER_REGISTRY_NAME}/${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
+                sh "docker tag ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} teds2acr.azurecr.io/${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
                 sh "docker push teds2acr.azurecr.io/${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
                 echo 'Pushing docker image with tag latest'
                 sh "docker tag ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ${DOCKER_REGISTRY_NAME}/${DOCKER_IMAGE_NAME}:latest"
