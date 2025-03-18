@@ -98,16 +98,28 @@ pipeline {
         stage('Deploy to Pre') {
             steps {
                 echo "Logging into Azure securely"
-                withCredentials([
+                withCredentials([ 
                     string(credentialsId: 'AZURE_SUBSCRIPTION', variable: 'AZ_SUB_ID'),
                     string(credentialsId: 'AZURE_TENANT_ID', variable: 'AZ_TENANT_ID'),
                     usernamePassword(credentialsId: 'AZURE_SERVICE_PRINCIPAL', usernameVariable: 'AZURE_SP_ID', passwordVariable: 'AZURE_SP_SECRET')
                 ]) {
-                    sh 'az login --service-principal -u $AZURE_SP_ID -p $AZURE_SP_SECRET --tenant $AZ_TENANT_ID'
+                    sh '''
+                        az login --service-principal -u $AZURE_SP_ID -p $AZURE_SP_SECRET --tenant $AZ_TENANT_ID
+                        if [ $? -ne 0 ]; then
+                            echo "Azure login failed. Please check your credentials or permissions."
+                            exit 1
+                        fi
+                    '''
                 }
 
                 echo "Fetching AKS credentials"
-                sh 'az aks get-credentials --resource-group TedsAKS_group --name TedsAKS --overwrite-existing'
+                sh '''
+                    az aks get-credentials --resource-group TedsAKS_group --name TedsAKS --overwrite-existing
+                    if [ $? -ne 0 ]; then
+                        echo "Failed to fetch AKS credentials. Please check your permissions."
+                        exit 1
+                    fi
+                '''
 
                 echo "Deploying to preprod"
                 sh 'kubectl apply -f kubernetes/preprod-deployment-log4j.yaml'
