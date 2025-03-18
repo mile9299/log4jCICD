@@ -122,6 +122,7 @@ pipeline {
                 '''
 
                 echo "Deploying to preprod"
+                sh 'kubectl create ns preprod-log4j'
                 sh 'kubectl apply -f kubernetes/preprod-deployment-log4j.yaml'
             }
         }
