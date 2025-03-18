@@ -12,9 +12,6 @@ pipeline {
         CS_CLIENT_SECRET = credentials('CS_CLIENT_SECRET')
         CS_USERNAME = credentials('CS_USERNAME')
         CS_PASSWORD = credentials('CS_PASSWORD')
-        AZURE_SUBSCRIPTION = credentials('AZURE_SUBSCRIPTION')
-        ACR_USER = credentials('ACR_USER')
-        ACR_PASSWORD = credentials('ACR_PASSWORD')
     }
 
     stages {
@@ -29,7 +26,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo 'Building docker image'
-                sh "docker build -t ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ."
+                sh 'docker build -t $DOCKER_IMAGE_NAME:$BUILD_NUMBER .'
             }
         }
 
@@ -40,45 +37,51 @@ pipeline {
             }
         }
 
-        stage('Image Assessment Crowdstrike') {
+        stage('Image Assessment CrowdStrike') {
             steps {
                 withCredentials([usernameColonPassword(credentialsId: 'CRWD', variable: 'CROWDSTRIKE_CREDENTIALS')]) {
-                    crowdStrikeSecurity imageName: "${DOCKER_IMAGE_NAME}", imageTag: "${env.BUILD_NUMBER}", enforce: false, timeout: 60
+                    crowdStrikeSecurity imageName: "$DOCKER_IMAGE_NAME", imageTag: "$BUILD_NUMBER", enforce: false, timeout: 60
                 }
             }
         }
 
         stage('Push Docker Image to ACR') {
             steps {
-                echo "Login to ACR"
-                    //sh "az account set --subscription ${AZURE_SUBSCRIPTION}"
-                sh "docker login teds2acr.azurecr.io -u ${ACR_USER} -p ${ACR_PASSWORD}"
-                echo 'Login Completed'
-                echo "Pushing docker image to ECR with current build tag"
-                sh "docker tag ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} teds2acr.azurecr.io/${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
-                sh "docker push teds2acr.azurecr.io/${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
+                echo "Logging into ACR securely"
+                withCredentials([usernamePassword(credentialsId: 'ACR_CREDENTIALS', usernameVariable: 'ACR_USER', passwordVariable: 'ACR_PASSWORD')]) {
+                    sh 'docker login teds2acr.azurecr.io -u $ACR_USER -p $ACR_PASSWORD'
+                }
+
+                echo 'Pushing docker image to ACR with build tag'
+                sh 'docker tag $DOCKER_IMAGE_NAME:$BUILD_NUMBER teds2acr.azurecr.io/$DOCKER_IMAGE_NAME:$BUILD_NUMBER'
+                sh 'docker push teds2acr.azurecr.io/$DOCKER_IMAGE_NAME:$BUILD_NUMBER'
+
                 echo 'Pushing docker image with tag latest'
-                sh "docker tag ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} teds2acr.azurecr.io/${DOCKER_IMAGE_NAME}:latest"
-                sh "docker push teds2acr.azurecr.io/${DOCKER_IMAGE_NAME}:latest"
+                sh 'docker tag $DOCKER_IMAGE_NAME:$BUILD_NUMBER teds2acr.azurecr.io/$DOCKER_IMAGE_NAME:latest'
+                sh 'docker push teds2acr.azurecr.io/$DOCKER_IMAGE_NAME:latest'
             }
         }
 
         stage('FCS IaC Scan Execution') {
             steps {
-                withCredentials([usernameColonPassword(credentialsId: 'CRWD', variable: 'CROWDSTRIKE_CREDENTIALS')]) {
+               withCredentials([usernameColonPassword(credentialsId: 'CRWD', variable: 'CROWDSTRIKE_CREDENTIALS')]) {
                     script {
                         def SCAN_EXIT_CODE = sh(
                             script: '''
                                 set -e
                                 scan_status=0
-                                echo "Logging in to Crowdstrike registry"
+                                echo "Logging in to CrowdStrike registry"
                                 echo "$CS_PASSWORD" | docker login "$CS_REGISTRY" --username "$CS_USERNAME" --password-stdin
                                 docker pull mile/cs-fcs:0.42.0 || exit 1
-                                docker run --network=host --rm "$CS_IMAGE_NAME":"$CS_IMAGE_TAG" --client-id "$CS_CLIENT_ID" --client-secret "$CS_CLIENT_SECRET" --falcon-region "$FALCON_REGION" iac scan -p "$PROJECT_PATH" --fail-on "high=10,medium=70,low=50,info=10"
+                                docker run --network=host --rm "$CS_IMAGE_NAME":"$CS_IMAGE_TAG" \
+                                    --client-id "$CS_CLIENT_ID" --client-secret "$CS_CLIENT_SECRET" \
+                                    --falcon-region "$FALCON_REGION" \
+                                    iac scan -p "$PROJECT_PATH" --fail-on "high=10,medium=70,low=50,info=10"
                                 scan_status=$?
                                 exit $scan_status
                             ''', returnStatus: true
                         )
+
                         if (SCAN_EXIT_CODE == 40) {
                             currentBuild.result = 'UNSTABLE'
                         } else if (SCAN_EXIT_CODE == 0) {
@@ -94,19 +97,31 @@ pipeline {
 
         stage('Deploy to Pre') {
             steps {
-                sh "az login --service-principal -u ${AZURE_SUBSCRIPTION} -p ${ACR_PASSWORD} --tenant 06e0fa1f-a4d9-47bb-9e62-3c3e299ba202"
-                sh "az aks get-credentials --resource-group TedsAKS_group --name TedsAKS --overwrite-existing"
-                sh "kubectl apply -f kubernetes/preprod-deployment-log4j.yaml"
+                echo "Logging into Azure securely"
+                withCredentials([
+                    string(credentialsId: 'AZURE_SUBSCRIPTION', variable: 'AZ_SUB_ID'),
+                    string(credentialsId: 'AZURE_TENANT_ID', variable: 'AZ_TENANT_ID'),
+                    usernamePassword(credentialsId: 'AZURE_SERVICE_PRINCIPAL', usernameVariable: 'AZURE_SP_ID', passwordVariable: 'AZURE_SP_SECRET')
+                ]) {
+                    sh 'az login --service-principal -u $AZURE_SP_ID -p $AZURE_SP_SECRET --tenant $AZ_TENANT_ID'
+                }
+
+                echo "Fetching AKS credentials"
+                sh 'az aks get-credentials --resource-group TedsAKS_group --name TedsAKS --overwrite-existing'
+
+                echo "Deploying to preprod"
+                sh 'kubectl apply -f kubernetes/preprod-deployment-log4j.yaml'
             }
         }
-
 
         stage('Deploy to Production') {
             steps {
                 timeout(time: 15, unit: 'MINUTES') {
                     input message: 'Do you want to approve the deployment?', ok: 'Yes'
                 }
-                sh "kubectl rollout restart -f kubernetes/deployment-log4j.yaml"
+
+                echo "Restarting production deployment"
+                sh 'kubectl rollout restart -f kubernetes/deployment-log4j.yaml'
             }
         }
     }
