@@ -1,13 +1,13 @@
 pipeline {
     agent any
     environment {
-        DOCKER_REGISTRY_NAME = "517716713836.dkr.ecr.eu-central-1.amazonaws.com"
+        DOCKER_REGISTRY_NAME = "teds2acr.azurecr.io"
         DOCKER_IMAGE_NAME = "cicd-log4j"
         CS_REGISTRY = "registry.crowdstrike.com"
         CS_IMAGE_NAME = "registry.crowdstrike.com/fcs/us-1/release/cs-fcs"
         CS_IMAGE_TAG = "0.42.0"
         FALCON_REGION = "us-1"
-        PROJECT_PATH = "git::https://github.com/grocamador/cicd-log4j.git//kubernetes"
+        PROJECT_PATH = "git::https://github.com/mile9299/log4jCICD.git//kubernetes"
         CS_CLIENT_ID = credentials('CS_CLIENT_ID')
         CS_CLIENT_SECRET = credentials('CS_CLIENT_SECRET')
         CS_USERNAME = credentials('CS_USERNAME')
