@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: preprod-log4j
-        image: 517716713836.dkr.ecr.eu-central-1.amazonaws.com/cicd-log4j:latest 
+        image: teds2acr.azurecr.io/cicd-log4j:latest 
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
