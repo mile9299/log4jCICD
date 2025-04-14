@@ -3,7 +3,7 @@ pipeline {
     environment {
         DOCKER_REGISTRY_NAME = "teds2acr.azurecr.io"
         DOCKER_IMAGE_NAME = "cicd-log4j"
-        CS_REGISTRY = "https://hub.docker.com/repositories/mile"
+        CS_REGISTRY = "https://hub.docker.com"
         CS_IMAGE_NAME = "mile/cs-fcs"
         CS_IMAGE_TAG = "0.42.0"
         FALCON_REGION = "us-1"
