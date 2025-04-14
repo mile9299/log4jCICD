@@ -10,7 +10,7 @@ pipeline {
         PROJECT_PATH = "git::https://github.com/mile9299/log4jCICD.git//kubernetes"
         CS_CLIENT_ID = credentials('CS_CLIENT_ID')
         CS_CLIENT_SECRET = credentials('CS_CLIENT_SECRET')
-        CS_USERNAME = credentials('CS_USERNAME')
+        CS_USERNAME = 'mile'
         CS_PASSWORD = credentials('CS_PASSWORD')
     }
 
@@ -70,7 +70,7 @@ pipeline {
                             script: '''
                                 set -e
                                 scan_status=0
-                                echo "Logging in to CrowdStrike registry"
+                                echo "Logging in to DockerHub registry"
                                 echo "$CS_PASSWORD" | docker login "$CS_REGISTRY" --username "$CS_USERNAME" --password-stdin
                                 docker pull mile/cs-fcs:0.42.0 || exit 1
                                 docker run --network=host --rm "$CS_IMAGE_NAME":"$CS_IMAGE_TAG" \
