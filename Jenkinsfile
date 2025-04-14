@@ -36,7 +36,13 @@ pipeline {
                 sh 'docker --version'
             }
         }
-
+        stage('Test with Snyk') {
+            steps {
+                script {
+                    snykSecurity failOnIssues: false, severity: 'critical', snykInstallation: 'snyk-manual', snykTokenId: 'SNYK'
+                }
+            }
+        }
         stage('Image Assessment CrowdStrike') {
             steps {
                 withCredentials([usernameColonPassword(credentialsId: 'CRWD', variable: 'CROWDSTRIKE_CREDENTIALS')]) {
