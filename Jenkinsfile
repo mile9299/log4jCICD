@@ -36,6 +36,7 @@ pipeline {
                 sh 'docker --version'
             }
         }
+        
         stage('Test with Snyk') {
             steps {
                 script {
@@ -43,6 +44,7 @@ pipeline {
                 }
             }
         }
+        
         stage('Image Assessment CrowdStrike') {
             steps {
                 withCredentials([usernameColonPassword(credentialsId: 'CRWD', variable: 'CROWDSTRIKE_CREDENTIALS')]) {
