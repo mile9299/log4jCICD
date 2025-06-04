@@ -84,10 +84,7 @@ pipeline {
                                 echo "Logging in to DockerHub registry"
                                 echo "$CS_PASSWORD" | docker login --username "$CS_USERNAME" --password-stdin
                                 docker pull mile/cs-fcs:1.0.0 || exit 1
-                                docker run --network=host --rm "$CS_IMAGE_NAME":"$CS_IMAGE_TAG" \
-                                    --client-id "$CS_CLIENT_ID" --client-secret "$CS_CLIENT_SECRET" \
-                                    --falcon-region "$FALCON_REGION" \
-                                    iac scan -p "$PROJECT_PATH" 
+                                docker run --network=host --rm "$CS_IMAGE_NAME":"$CS_IMAGE_TAG" --client-id "$CS_CLIENT_ID" --client-secret "$CS_CLIENT_SECRET" --falcon-region "$FALCON_REGION" iac scan -p "$PROJECT_PATH"
                                 scan_status=$?
                                 exit $scan_status
                             ''', returnStatus: true
