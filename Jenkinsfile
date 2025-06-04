@@ -87,7 +87,7 @@ pipeline {
                                 docker run --network=host --rm "$CS_IMAGE_NAME":"$CS_IMAGE_TAG" \
                                     --client-id "$CS_CLIENT_ID" --client-secret "$CS_CLIENT_SECRET" \
                                     --falcon-region "$FALCON_REGION" \
-                                    iac scan -p "$PROJECT_PATH" --upload-results"
+                                    iac scan -p "$PROJECT_PATH" --upload-results
                                 scan_status=$?
                                 exit $scan_status
                             ''', returnStatus: true
