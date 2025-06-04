@@ -1,4 +1,4 @@
-pipeline {
+pipeline {More actions
     agent any
     environment {
         DOCKER_REGISTRY_NAME = "teds2acr.azurecr.io"
@@ -45,6 +45,7 @@ pipeline {
                     }
                 }
             }
+
         }
 
         stage('Image Assessment CrowdStrike') {
@@ -72,46 +73,34 @@ pipeline {
             }
         }
 
-        stage('Falcon Cloud Security IaC Scan') {
+        stage('FCS IaC Scan Execution') {
             steps {
-                script {
-                    def SCAN_EXIT_CODE = sh(
-                        script: '''
-                            set +x
-                            scan_status=0
-                            if [[ -z "$CS_USERNAME" || -z "$CS_PASSWORD" || -z "$CS_REGISTRY" || -z "$CS_IMAGE_NAME" || -z "$CS_IMAGE_TAG" || -z "$CS_CLIENT_ID" || -z "$CS_CLIENT_SECRET" || -z "$FALCON_REGION" || -z "$PROJECT_PATH" ]]; then
-                                echo "Error: required environment variables/params are not set"
-                                exit 1
-                            fi
-                            
-                            echo "Logging in to crowdstrike registry with username: $CS_USERNAME"
-                            echo "$CS_PASSWORD" | docker login --username "$CS_USERNAME" --password-stdin
-                            
-                            echo "Pulling fcs container target from crowdstrike"
-                            docker pull mile/cs-fcs:1.0.0
-                            
-                            echo "=============== FCS IaC Scan Starts ==============="
-                            docker run --network=host --rm "$CS_IMAGE_NAME":"$CS_IMAGE_TAG" \
-                                --client-id "$CS_CLIENT_ID" \
-                                --client-secret "$CS_CLIENT_SECRET" \
-                                --falcon-region "$FALCON_REGION" \
-                                iac scan -p "$PROJECT_PATH"
-                            scan_status=$?
-                            echo "=============== FCS IaC Scan Ends ==============="
-                            exit $scan_status
-                        ''',
-                        returnStatus: true
-                    )
-                    
-                    echo "fcs-iac-scan-status: ${SCAN_EXIT_CODE}"
-                    if (SCAN_EXIT_CODE == 40) {
-                        echo "Scan succeeded & vulnerabilities count are ABOVE the '--fail-on' threshold"
-                        currentBuild.result = 'UNSTABLE'
-                    } else if (SCAN_EXIT_CODE == 0) {
-                        echo "Scan succeeded & vulnerabilities count are BELOW the '--fail-on' threshold"
-                        currentBuild.result = 'SUCCESS'
-                    } else {
-                        error "Unexpected scan exit code: ${SCAN_EXIT_CODE}"
+               withCredentials([usernameColonPassword(credentialsId: 'CRWD', variable: 'CROWDSTRIKE_CREDENTIALS')]) {
+                    script {
+                        def SCAN_EXIT_CODE = sh(
+                            script: '''
+                                set -e
+                                scan_status=0
+                                echo "Logging in to DockerHub registry"
+                                echo "$CS_PASSWORD" | docker login --username "$CS_USERNAME" --password-stdin
+                                docker pull mile/cs-fcs:0.42.0 || exit 1
+                                docker run --network=host --rm "$CS_IMAGE_NAME":"$CS_IMAGE_TAG" \
+                                    --client-id "$CS_CLIENT_ID" --client-secret "$CS_CLIENT_SECRET" \
+                                    --falcon-region "$FALCON_REGION" \
+                                    iac scan -p "$PROJECT_PATH"
+                                scan_status=$?
+                                exit $scan_status
+                            ''', returnStatus: true
+                        )
+
+                        if (SCAN_EXIT_CODE == 40) {
+                            currentBuild.result = 'UNSTABLE'
+                        } else if (SCAN_EXIT_CODE == 0) {
+                            currentBuild.result = 'SUCCESS'
+                        } else {
+                            currentBuild.result = 'FAILURE'
+                            error "FCS IaC Scan failed with exit code ${SCAN_EXIT_CODE}"
+                        }
                     }
                 }
             }
@@ -144,6 +133,7 @@ pipeline {
                 '''
 
                 echo "Deploying to preprod"
+               // sh 'kubectl create ns preprod-log4j'
                 sh 'kubectl apply -f kubernetes/preprod-deployment-log4j.yaml'
             }
         }
@@ -155,23 +145,9 @@ pipeline {
                 }
 
                 echo "Restarting production deployment"
+               // sh 'kubectl create ns log4j-prod'
                 sh 'kubectl apply -f kubernetes/deployment-log4j.yaml'
             }
-        }
-    }
-
-    post {
-        success {
-            echo 'Build succeeded!'
-        }
-        unstable {
-            echo 'Build is unstable, but still considered successful!'
-        }
-        failure {
-            echo 'Build failed!'
-        }
-        always {
-            echo "FCS IaC Scan Execution complete.."
         }
     }
 }
