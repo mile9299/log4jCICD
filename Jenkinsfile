@@ -1,4 +1,4 @@
-pipeline {More actions
+pipeline {
     agent any
     environment {
         DOCKER_REGISTRY_NAME = "teds2acr.azurecr.io"
