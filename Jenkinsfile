@@ -84,13 +84,11 @@ pipeline {
                                 echo "Logging in to DockerHub registry"
                                 echo "$CS_PASSWORD" | docker login --username "$CS_USERNAME" --password-stdin
                                 docker pull mile/cs-fcs:1.0.0 || exit 1
-                                iac scan \
+                                iac scan -p "$PROJECT_PATH" \
                                 --client-id "$CS_CLIENT_ID" \
                                 --client-secret "$CS_CLIENT_SECRET" \
                                 --falcon-region "$FALCON_REGION" \
-                                --debug \
-                                -p "$PROJECT_PATH"
-                        
+                                --debug                         
                         SCAN_STATUS=$?
                         echo "Scan completed with status: $SCAN_STATUS"
                         echo "=============== FCS IaC Scan Ends ==============="
