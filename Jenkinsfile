@@ -45,7 +45,6 @@ pipeline {
                     }
                 }
             }
-
         }
         
         stage('Image Assessment CrowdStrike') {
@@ -75,61 +74,37 @@ pipeline {
 
         stage('FCS IaC Scan Execution') {
             steps {
-               withCredentials([usernameColonPassword(credentialsId: 'CRWD', variable: 'CROWDSTRIKE_CREDENTIALS')]) {
+                withCredentials([usernameColonPassword(credentialsId: 'CRWD', variable: 'CROWDSTRIKE_CREDENTIALS')]) {
                     script {
                         def SCAN_EXIT_CODE = sh(
                             script: '''
-                                set -e
-                                scan_status=0
                                 echo "Logging in to DockerHub registry"
                                 echo "$CS_PASSWORD" | docker login --username "$CS_USERNAME" --password-stdin
-                                docker pull mile/cs-fcs:1.0.0 || exit 1
-                                docker run --network=host --rm "$CS_IMAGE_NAME":"$CS_IMAGE_TAG" --client-id "$CS_CLIENT_ID" --client-secret "$CS_CLIENT_SECRET" --falcon-region "$FALCON_REGION" iac scan -p "$PROJECT_PATH"
-                                scan_status=$?
-                                echo "=============== FCS IaC Scan Ends ==============="
-                            else
-                                echo "Error: failed to pull fcs docker image from crowdstrike"
-                                scan_status=1
-                            fi
-                        else
-                            echo "Error: docker login failed"
-                            scan_status=1
-                        fi
-                    fi
-                ''', returnStatus: true
-                )
-                echo "fcs-iac-scan-status: ${SCAN_EXIT_CODE}"
-                if (SCAN_EXIT_CODE == 40) {
-                    echo "Scan succeeded & vulnerabilities count are ABOVE the '--fail-on' threshold; Pipeline will be marked as Success, but this stage will be marked as Unstable"
-                    skipPublishingChecks: false
-                    currentBuild.result = 'UNSTABLE'
-                } else if (SCAN_EXIT_CODE == 0) {
-                    echo "Scan succeeded & vulnerabilities count are BELOW the '--fail-on' threshold; Pipeline will be marked as Success"
-                    skipPublishingChecks: false
-                    skipMarkingBuildUnstable: false
-                    currentBuild.result = 'Success'
-                } else {
-                    currentBuild.result = 'Failure'
-                    error 'Unexpected scan exit code: ${SCAN_EXIT_CODE}'
+                                docker pull mile/cs-fcs:1.0.0
+                                docker run --network=host --rm "$CS_IMAGE_NAME":"$CS_IMAGE_TAG" \
+                                    --client-id "$CS_CLIENT_ID" \
+                                    --client-secret "$CS_CLIENT_SECRET" \
+                                    --falcon-region "$FALCON_REGION" \
+                                    iac scan -p "$PROJECT_PATH"
+                            ''',
+                            returnStatus: true
+                        )
+                        
+                        echo "fcs-iac-scan-status: ${SCAN_EXIT_CODE}"
+                        if (SCAN_EXIT_CODE == 40) {
+                            echo "Scan succeeded & vulnerabilities count are ABOVE the '--fail-on' threshold"
+                            currentBuild.result = 'UNSTABLE'
+                        } else if (SCAN_EXIT_CODE == 0) {
+                            echo "Scan succeeded & vulnerabilities count are BELOW the '--fail-on' threshold"
+                            currentBuild.result = 'SUCCESS'
+                        } else {
+                            error "Unexpected scan exit code: ${SCAN_EXIT_CODE}"
+                        }
+                    }
                 }
-                
+            }
         }
-    }
-    post {
-        success {
-            echo 'Build succeeded!'
-        }
-        unstable {
-            echo 'Build is unstable, but still considered successful!'
-        }
-        failure {
-            echo 'Build failed!'
-        }
-        always {
-            echo "FCS IaC Scan Execution complete.."
-        }
-    }
-}
+
         stage('Deploy to Pre') {
             steps {
                 echo "Logging into Azure securely"
@@ -157,7 +132,6 @@ pipeline {
                 '''
 
                 echo "Deploying to preprod"
-               // sh 'kubectl create ns preprod-log4j'
                 sh 'kubectl apply -f kubernetes/preprod-deployment-log4j.yaml'
             }
         }
@@ -169,9 +143,23 @@ pipeline {
                 }
 
                 echo "Restarting production deployment"
-               // sh 'kubectl create ns log4j-prod'
                 sh 'kubectl apply -f kubernetes/deployment-log4j.yaml'
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build succeeded!'
+        }
+        unstable {
+            echo 'Build is unstable, but still considered successful!'
+        }
+        failure {
+            echo 'Build failed!'
+        }
+        always {
+            echo "FCS IaC Scan Execution complete.."
         }
     }
 }
