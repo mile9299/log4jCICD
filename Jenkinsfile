@@ -94,7 +94,7 @@ pipeline {
                                     -e FCS_CLIENT_ID="$FCS_CLIENT_ID" \
                                     -e FCS_CLIENT_SECRET="$FCS_CLIENT_SECRET" \
                                     "$CS_IMAGE_NAME:$CS_IMAGE_TAG" \
-                                    iac fcs scan iac \
+                                    fcs scan iac \
                                     -p "$PROJECT_PATH" \
                                     --falcon-region "$FALCON_REGION" \
                                     --debug
