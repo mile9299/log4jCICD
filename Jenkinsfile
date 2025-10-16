@@ -83,7 +83,7 @@ pipeline {
                                 scan_status=0
                                 echo "Logging in to DockerHub registry"
                                 echo "$CS_PASSWORD" | docker login --username "$CS_USERNAME" --password-stdin
-                                docker pull mile/cs-fcs:1.0.0 || exit 1
+                                docker pull mile/cs-fcs:2.1.0 || exit 1
                                 iac scan -p "$PROJECT_PATH" \
                                 --client-id "$CS_CLIENT_ID" \
                                 --client-secret "$CS_CLIENT_SECRET" \
