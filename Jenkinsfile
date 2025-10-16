@@ -38,43 +38,6 @@ pipeline {
                 sh 'docker --version'
             }
         }
-
-        stage('Test with Snyk') {
-            steps {
-                dir('vulnerable-application') {
-                    script {
-                        snykSecurity failOnIssues: false, severity: 'critical', snykInstallation: 'snyk-manual', snykTokenId: 'SNYK'
-                    }
-                }
-            }
-
-        }
-
-        stage('Image Assessment CrowdStrike') {
-            steps {
-                withCredentials([usernameColonPassword(credentialsId: 'CRWD', variable: 'CROWDSTRIKE_CREDENTIALS')]) {
-                    crowdStrikeSecurity imageName: "$DOCKER_IMAGE_NAME", imageTag: "$BUILD_NUMBER", enforce: true, timeout: 60
-                }
-            }
-        }
-
-        stage('Push Docker Image to ACR') {
-            steps {
-                echo "Logging into ACR securely"
-                withCredentials([usernamePassword(credentialsId: 'ACR_CREDENTIALS', usernameVariable: 'ACR_USER', passwordVariable: 'ACR_PASSWORD')]) {
-                    sh 'docker login teds2acr.azurecr.io -u $ACR_USER -p $ACR_PASSWORD'
-                }
-
-                echo 'Pushing docker image to ACR with build tag'
-                sh 'docker tag $DOCKER_IMAGE_NAME:$BUILD_NUMBER teds2acr.azurecr.io/$DOCKER_IMAGE_NAME:$BUILD_NUMBER'
-                sh 'docker push teds2acr.azurecr.io/$DOCKER_IMAGE_NAME:$BUILD_NUMBER'
-
-                echo 'Pushing docker image with tag latest'
-                sh 'docker tag $DOCKER_IMAGE_NAME:$BUILD_NUMBER teds2acr.azurecr.io/$DOCKER_IMAGE_NAME:latest'
-                sh 'docker push teds2acr.azurecr.io/$DOCKER_IMAGE_NAME:latest'
-            }
-        }
-
         stage('FCS IaC Scan Execution') {
             steps {
                withCredentials([usernameColonPassword(credentialsId: 'CRWD', variable: 'CROWDSTRIKE_CREDENTIALS')]) {
@@ -129,6 +92,41 @@ pipeline {
                         }
                     }
                 }
+            }
+        }
+        stage('Test with Snyk') {
+            steps {
+                dir('vulnerable-application') {
+                    script {
+                        snykSecurity failOnIssues: false, severity: 'critical', snykInstallation: 'snyk-manual', snykTokenId: 'SNYK'
+                    }
+                }
+            }
+
+        }
+
+        stage('Image Assessment CrowdStrike') {
+            steps {
+                withCredentials([usernameColonPassword(credentialsId: 'CRWD', variable: 'CROWDSTRIKE_CREDENTIALS')]) {
+                    crowdStrikeSecurity imageName: "$DOCKER_IMAGE_NAME", imageTag: "$BUILD_NUMBER", enforce: true, timeout: 60
+                }
+            }
+        }
+
+        stage('Push Docker Image to ACR') {
+            steps {
+                echo "Logging into ACR securely"
+                withCredentials([usernamePassword(credentialsId: 'ACR_CREDENTIALS', usernameVariable: 'ACR_USER', passwordVariable: 'ACR_PASSWORD')]) {
+                    sh 'docker login teds2acr.azurecr.io -u $ACR_USER -p $ACR_PASSWORD'
+                }
+
+                echo 'Pushing docker image to ACR with build tag'
+                sh 'docker tag $DOCKER_IMAGE_NAME:$BUILD_NUMBER teds2acr.azurecr.io/$DOCKER_IMAGE_NAME:$BUILD_NUMBER'
+                sh 'docker push teds2acr.azurecr.io/$DOCKER_IMAGE_NAME:$BUILD_NUMBER'
+
+                echo 'Pushing docker image with tag latest'
+                sh 'docker tag $DOCKER_IMAGE_NAME:$BUILD_NUMBER teds2acr.azurecr.io/$DOCKER_IMAGE_NAME:latest'
+                sh 'docker push teds2acr.azurecr.io/$DOCKER_IMAGE_NAME:latest'
             }
         }
 
