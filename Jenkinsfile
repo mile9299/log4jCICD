@@ -80,27 +80,40 @@ pipeline {
                         def SCAN_EXIT_CODE = sh(
                             script: '''
                                 set -e
-                                scan_status=0
+                                echo "=============== FCS IaC Scan Starts ==============="
                                 echo "Logging in to DockerHub registry"
                                 echo "$CS_PASSWORD" | docker login --username "$CS_USERNAME" --password-stdin
-                                docker pull mile/cs-fcs:2.1.0 || exit 1
-                                iac scan -p "$PROJECT_PATH" \
-                                --client-id "$CS_CLIENT_ID" \
-                                --client-secret "$CS_CLIENT_SECRET" \
-                                --falcon-region "$FALCON_REGION" \
-                                --debug                         
-                        SCAN_STATUS=$?
-                        echo "Scan completed with status: $SCAN_STATUS"
-                        echo "=============== FCS IaC Scan Ends ==============="
-                        exit $SCAN_STATUS
+                                
+                                echo "Pulling CrowdStrike FCS image"
+                                docker pull "$CS_IMAGE_NAME:$CS_IMAGE_TAG" || exit 1
+                                
+                                echo "Running FCS IaC scan in container"
+                                docker run --rm \
+                                    -e FALCON_CLIENT_ID="$CS_CLIENT_ID" \
+                                    -e FALCON_CLIENT_SECRET="$CS_CLIENT_SECRET" \
+                                    "$CS_IMAGE_NAME:$CS_IMAGE_TAG" \
+                                    iac scan \
+                                    -p "$PROJECT_PATH" \
+                                    --falcon-region "$FALCON_REGION" \
+                                    --debug
+                                
+                                SCAN_STATUS=$?
+                                echo "Scan completed with status: $SCAN_STATUS"
+                                echo "=============== FCS IaC Scan Ends ==============="
+                                exit $SCAN_STATUS
                             ''', returnStatus: true
                         )
 
+                        echo "FCS IaC Scan exit code: ${SCAN_EXIT_CODE}"
+                        
                         if (SCAN_EXIT_CODE == 40) {
+                            echo "FCS IaC Scan found policy violations - marking build as UNSTABLE"
                             currentBuild.result = 'UNSTABLE'
                         } else if (SCAN_EXIT_CODE == 0) {
+                            echo "FCS IaC Scan completed successfully"
                             currentBuild.result = 'SUCCESS'
                         } else {
+                            echo "FCS IaC Scan failed with unexpected exit code"
                             currentBuild.result = 'FAILURE'
                             error "FCS IaC Scan failed with exit code ${SCAN_EXIT_CODE}"
                         }
