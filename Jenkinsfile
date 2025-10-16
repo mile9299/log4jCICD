@@ -96,8 +96,7 @@ pipeline {
                                     "$CS_IMAGE_NAME:$CS_IMAGE_TAG" \
                                     scan iac \
                                     -p "$PROJECT_PATH" \
-                                    --falcon-region "$FALCON_REGION" \
-                                    --debug
+                                    --falcon-region "$FALCON_REGION"
                                 
                                 SCAN_STATUS=$?
                                 echo "Scan completed with status: $SCAN_STATUS"
