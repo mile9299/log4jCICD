@@ -59,6 +59,7 @@ pipeline {
                                     "$CS_IMAGE_NAME:$CS_IMAGE_TAG" \
                                     iac scan \
                                     -p "$PROJECT_PATH" \
+                                    --fail-on "high=1,medium=1,informational=1"
                                     --falcon-region "$FALCON_REGION"
                                 
                                 SCAN_STATUS=$?
