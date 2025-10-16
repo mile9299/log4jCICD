@@ -91,8 +91,8 @@ pipeline {
                                 
                                 echo "Running FCS IaC scan in container"
                                 docker run --rm \
-                                    -e FALCON_CLIENT_ID="$FCS_CLIENT_ID" \
-                                    -e FALCON_CLIENT_SECRET="$FCS_CLIENT_SECRET" \
+                                    -e FCS_CLIENT_ID="$FCS_CLIENT_ID" \
+                                    -e FCS_CLIENT_SECRET="$FCS_CLIENT_SECRET" \
                                     "$CS_IMAGE_NAME:$CS_IMAGE_TAG" \
                                     iac scan \
                                     -p "$PROJECT_PATH" \
