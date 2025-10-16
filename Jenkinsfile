@@ -10,8 +10,6 @@ pipeline {
         PROJECT_PATH = "git::https://github.com/mile9299/log4jCICD.git//kubernetes"
         CS_CLIENT_ID = credentials('CS_CLIENT_ID')
         CS_CLIENT_SECRET = credentials('CS_CLIENT_SECRET')
-        FCS_CLIENT_ID = credentials('CS_CLIENT_ID')
-        FCS_CLIENT_SECRET = credentials('CS_CLIENT_SECRET')
         CS_USERNAME = 'mile'
         CS_PASSWORD = credentials('CS_PASSWORD')
     }
@@ -91,12 +89,13 @@ pipeline {
                                 
                                 echo "Running FCS IaC scan in container"
                                 docker run --rm \
-                                    -e FCS_CLIENT_ID="$FCS_CLIENT_ID" \
-                                    -e FCS_CLIENT_SECRET="$FCS_CLIENT_SECRET" \
+                                    -e FALCON_CLIENT_ID="$CS_CLIENT_ID" \
+                                    -e FALCON_CLIENT_SECRET="$CS_CLIENT_SECRET" \
                                     "$CS_IMAGE_NAME:$CS_IMAGE_TAG" \
-                                    scan iac \
+                                    iac scan \
                                     -p "$PROJECT_PATH" \
-                                    --falcon-region "$FALCON_REGION"
+                                    --falcon-region "$FALCON_REGION" \
+                                    --debug
                                 
                                 SCAN_STATUS=$?
                                 echo "Scan completed with status: $SCAN_STATUS"
@@ -107,16 +106,25 @@ pipeline {
 
                         echo "FCS IaC Scan exit code: ${SCAN_EXIT_CODE}"
                         
-                        if (SCAN_EXIT_CODE == 40) {
-                            echo "FCS IaC Scan found policy violations - marking build as UNSTABLE"
-                            currentBuild.result = 'UNSTABLE'
-                        } else if (SCAN_EXIT_CODE == 0) {
-                            echo "FCS IaC Scan completed successfully"
-                            currentBuild.result = 'SUCCESS'
-                        } else {
-                            echo "FCS IaC Scan failed with unexpected exit code"
-                            currentBuild.result = 'FAILURE'
-                            error "FCS IaC Scan failed with exit code ${SCAN_EXIT_CODE}"
+                        // Handle different exit codes based on CrowdStrike FCS documentation
+                        switch(SCAN_EXIT_CODE) {
+                            case 0:
+                                echo "FCS IaC Scan completed successfully - no issues found"
+                                currentBuild.result = 'SUCCESS'
+                                break
+                            case 30:
+                                echo "FCS IaC Scan found policy violations - marking build as UNSTABLE but continuing pipeline"
+                                currentBuild.result = 'UNSTABLE'
+                                // Don't fail the build, allow pipeline to continue
+                                break
+                            case 40:
+                                echo "FCS IaC Scan found critical policy violations - marking build as UNSTABLE"
+                                currentBuild.result = 'UNSTABLE'
+                                break
+                            default:
+                                echo "FCS IaC Scan failed with unexpected exit code: ${SCAN_EXIT_CODE}"
+                                currentBuild.result = 'FAILURE'
+                                error "FCS IaC Scan failed with exit code ${SCAN_EXIT_CODE}"
                         }
                     }
                 }
