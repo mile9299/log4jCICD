@@ -5,7 +5,7 @@ pipeline {
         DOCKER_IMAGE_NAME = "cicd-log4j"
         CS_REGISTRY = "https://hub.docker.com"
         CS_IMAGE_NAME = "mile/cs-fcs"
-        CS_IMAGE_TAG = "1.0.0"
+        CS_IMAGE_TAG = "2.1.0"
         FALCON_REGION = "us-1"
         PROJECT_PATH = "git::https://github.com/mile9299/log4jCICD.git//kubernetes"
         CS_CLIENT_ID = credentials('CS_CLIENT_ID')
