@@ -10,6 +10,8 @@ pipeline {
         PROJECT_PATH = "git::https://github.com/mile9299/log4jCICD.git//kubernetes"
         CS_CLIENT_ID = credentials('CS_CLIENT_ID')
         CS_CLIENT_SECRET = credentials('CS_CLIENT_SECRET')
+        FCS_CLIENT_ID = credentials('CS_CLIENT_ID')
+        FCS_CLIENT_SECRET = credentials('CS_CLIENT_SECRET')
         CS_USERNAME = 'mile'
         CS_PASSWORD = credentials('CS_PASSWORD')
     }
@@ -89,13 +91,12 @@ pipeline {
                                 
                                 echo "Running FCS IaC scan in container"
                                 docker run --rm \
-                                    -e FALCON_CLIENT_ID="$CS_CLIENT_ID" \
-                                    -e FALCON_CLIENT_SECRET="$CS_CLIENT_SECRET" \
+                                    -e FCS_CLIENT_ID="$FCS_CLIENT_ID" \
+                                    -e FCS_CLIENT_SECRET="$FCS_CLIENT_SECRET" \
                                     "$CS_IMAGE_NAME:$CS_IMAGE_TAG" \
                                     iac scan \
                                     -p "$PROJECT_PATH" \
-                                    --falcon-region "$FALCON_REGION" \
-                                    --debug
+                                    --falcon-region "$FALCON_REGION"
                                 
                                 SCAN_STATUS=$?
                                 echo "Scan completed with status: $SCAN_STATUS"
