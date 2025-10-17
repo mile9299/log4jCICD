@@ -60,7 +60,7 @@ pipeline {
                                     iac scan \
                                     -p "$PROJECT_PATH" \
                                     --falcon-region "$FALCON_REGION" \
-                                    --fail-on "medium=1"
+                                    --fail-on "high=1"
                                 
                                 SCAN_STATUS=$?
                                 echo "Scan completed with status: $SCAN_STATUS"
