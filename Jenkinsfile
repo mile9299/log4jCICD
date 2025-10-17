@@ -59,7 +59,8 @@ pipeline {
                                     "$CS_IMAGE_NAME:$CS_IMAGE_TAG" \
                                     iac scan \
                                     -p "$PROJECT_PATH" \
-                                    --falcon-region "$FALCON_REGION" 
+                                    --falcon-region "$FALCON_REGION" \
+                                    --fail-on "critical=1,high=1"
                                 SCAN_STATUS=$?
                                 echo "Scan completed with status: $SCAN_STATUS"
                                 echo "=============== FCS IaC Scan Ends ==============="
