@@ -57,7 +57,7 @@ pipeline {
                                     -e FCS_CLIENT_ID="$FCS_CLIENT_ID" \
                                     -e FCS_CLIENT_SECRET="$FCS_CLIENT_SECRET" \
                                     "$CS_IMAGE_NAME:$CS_IMAGE_TAG" \
-                                    iac scan \
+                                    scan iac \
                                     -p "$PROJECT_PATH" \
                                     --fail-on "high=1" \
                                     --falcon-region "$FALCON_REGION" \
