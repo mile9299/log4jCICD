@@ -7,7 +7,7 @@ pipeline {
         CS_IMAGE_NAME = "mile/cs-fcs"
         CS_IMAGE_TAG = "2.1.0"
         FALCON_REGION = "us-1"
-        PROJECT_PATH = "git::https://github.com/mile9299/log4jCICD.git//kubernetes"
+        PROJECT_PATH = "git::https://github.com/mile9299/IAC_Examples.git"
         CS_CLIENT_ID = credentials('CS_CLIENT_ID')
         CS_CLIENT_SECRET = credentials('CS_CLIENT_SECRET')
         FCS_CLIENT_ID = credentials('CS_CLIENT_ID')
