@@ -60,7 +60,8 @@ pipeline {
                                     iac scan \
                                     -p "$PROJECT_PATH" \
                                     --fail-on "high=1" \
-                                    --falcon-region "$FALCON_REGION"
+                                    --falcon-region "$FALCON_REGION" \
+                                    --upload-results  | tee $(Build.SourcesDirectory)/scansummary.txt
                                 SCAN_STATUS=$?
                                 echo "Scan completed with status: $SCAN_STATUS"
                                 echo "=============== FCS IaC Scan Ends ==============="
