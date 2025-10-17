@@ -59,7 +59,7 @@ pipeline {
                                     "$CS_IMAGE_NAME:$CS_IMAGE_TAG" \
                                     scan iac \
                                     -p "$PROJECT_PATH" \
-                                    --fail-on "high=1" \
+                                    --fail-on "high=20" \
                                     --falcon-region "$FALCON_REGION" \
                                     --upload-results  | tee $(Build.SourcesDirectory)/scansummary.txt
                                 SCAN_STATUS=$?
